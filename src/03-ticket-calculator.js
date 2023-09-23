@@ -54,7 +54,28 @@ const exampleTicketData = require("../data/tickets");
     calculateTicketPrice(tickets, ticketInfo);
     //> "Entrant type 'kid' cannot be found."
  */
-function calculateTicketPrice(ticketData, ticketInfo) {}
+    function calculateTicketPrice(ticketData, ticketInfo) { //This line defines the calculateTicketPrice function, which takes two parameters: ticketData (an object containing pricing information for different ticket types and extras) and ticketInfo (an object representing the specific ticket to be calculated).
+     let priceForTickets = 0;  //This line initializes a variable priceForTickets to 0. This variable will be used to accumulate the total price of the ticket, including any extras.
+
+     if (!ticketData[ticketInfo.ticketType])
+     return `Ticket type '${ticketInfo.ticketType}' cannot be found.`; //This if statement checks if the ticketInfo.ticketType exists as a key in the ticketData object. If it doesn't, it means the specified ticket type is not found in the data, and it returns an error message indicating that the ticket type cannot be found.
+
+     if (!ticketData[ticketInfo.ticketType].priceInCents[ticketInfo.entrantType])
+     return `Entrant type '${ticketInfo.entrantType}' cannot be found.`; //This if statement checks if the ticketInfo.entrantType exists as a key within the priceInCents object of the specified ticketType. If it doesn't, it means the specified entrant type is not found for the given ticket type, and it returns an error message indicating that the entrant type cannot be found.
+
+     priceForTickets = ticketData[ticketInfo.ticketType].priceInCents[ticketInfo.entrantType]; // This line calculates the base price for the ticket by accessing the priceInCents object nested within the specified ticketType and retrieving the price for the specified entrantType. It assigns this price to the priceForTickets variable.
+
+     for (let extra of ticketInfo.extras) {
+      if (!ticketData.extras[extra]) {
+        return `Extra type '${extra}' cannot be found.`;
+      }
+      priceForTickets += ticketData.extras[extra].priceInCents[ticketInfo.entrantType];
+     }  //This loop iterates through each item in the ticketInfo.extras array. For each extra, it checks if the extra type exists as a key in the ticketData.extras object. If it doesn't, it means the specified extra type is not found in the data, and it returns an error message. Otherwise, it adds the price of the extra for the specified entrantType to the priceForTickets variable.
+
+     return priceForTickets // After the calculations for the total ticket price (including base price and extras) is done, this line will return the priceForTickets, which represents the cost of the ticket in cents.
+    }
+    
+// This function essentially calculates the total price of a ticket based on the provided ticketInfo, taking into account the ticket type, entrant type, and any selected extras. If any of these values are invalid or not found in the ticketData object, it returns an error message. Otherwise, it returns the total price in cents.
 
 /**
  * purchaseTickets()
@@ -109,8 +130,42 @@ function calculateTicketPrice(ticketData, ticketInfo) {}
     purchaseTickets(tickets, purchases);
     //> "Ticket type 'discount' cannot be found."
  */
-function purchaseTickets(ticketData, purchases) {}
 
+    function purchaseTickets(ticketData, purchases) {  //This line defines the purchaseTickets function, which takes two parameters: ticketData (an object containing pricing information for different ticket types and extras) and purchases (an array representing the tickets to be purchased).
+      let purchaseTotal = 0;
+      let receipt = "";
+
+      //These two lines above initialize two variables: purchaseTotal (to keep track of the total cost of the purchased tickets) and receipt (to store the receipt as a string).
+    
+      for (let i = 0; i < purchases.length; i++) { //This line starts a for loop that iterates over each ticket purchase in the purchases array.
+        let ticketPrice = calculateTicketPrice(ticketData, purchases[i]); //Inside the loop, this line calculates the price of the current ticket purchase by calling the calculateTicketPrice function with ticketData and the current purchase (purchases[i]). It assigns the calculated price to the ticketPrice variable.
+    
+        if (typeof ticketPrice === "string") { //This if statement checks if the ticketPrice is a string. If it is, it means that an error message was returned by calculateTicketPrice, indicating an issue with the purchase. In this case, it returns the error message.
+          return ticketPrice; //If an error message is returned, the function immediately exits and returns the error message.
+        } else {  //If the ticketPrice is not a string (i.e., a valid ticket price was calculated), it proceeds to create the receipt for the purchase.
+          const entrantCaps = purchases[i].entrantType[0].toUpperCase() + purchases[i].entrantType.slice(1); //For lines 146 and 147:these lines capitalize the first letter of the entrantType and ticketType of the current purchase and store them in entrantCaps and ticketTypeCaps, respectively.
+          const ticketTypeCaps = purchases[i].ticketType[0].toUpperCase() + purchases[i].ticketType.slice(1);
+          const extrasFormatted = purchases[i].extras.map(extra => extra[0].toUpperCase() + extra.slice(1) + ' Access').join(", "); //This line formats the extras by capitalizing the first letter of each extra, adding " Access" to the end, and joining them into a comma-separated string stored in extrasFormatted.
+    
+          if (purchases[i].extras.length === 0) { //This if statement checks if there are no extras in the current purchase.
+            receipt += `${entrantCaps} ${ticketTypeCaps} Admission: $${(ticketPrice / 100).toFixed(2)}\n`; //If there are no extras, it adds a line to the receipt indicating the ticket purchase with the price formatted as dollars (divided by 100 to convert cents to dollars) with two decimal places.
+          } else { //If there are extras, it enters this branch of the if statement.
+            receipt += `${entrantCaps} ${ticketTypeCaps} Admission: $${(ticketPrice / 100).toFixed(2)} (${extrasFormatted})\n`; //It adds a line to the receipt indicating the ticket purchase with the price formatted as dollars and a list of extras formatted as previously described.
+          }
+    
+          purchaseTotal += ticketPrice; // This line adds the current ticket's price to the purchaseTotal to keep track of the total cost.
+        }
+      } //This marks the end of my for loop which is intended to iterate over all purchases.
+      return `Thank you for visiting the Dinosaur Museum!\n-------------------------------------------\n${receipt}-------------------------------------------\nTOTAL: $${(purchaseTotal / 100).toFixed(2)}`;
+    } //This line is for the function to return a formatted receipt that includes all ticket purchases, their prices, and the total cost. The receipt is constructed as a string with appropriate line breaks and formatting.
+    
+    //This function is to calculate the total cost of all ticket purchases, constructs a receipt for them, and return the receipt as a string. If any of the ticket prices are invalid (i.e., an error message is returned by calculateTicketPrice), it immediately exits and returns the error message.
+
+
+
+
+
+    
 // Do not change anything below this line.
 module.exports = {
   calculateTicketPrice,
